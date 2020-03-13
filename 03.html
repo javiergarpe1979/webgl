@@ -6,8 +6,12 @@
 </head>
 <body>
 <canvas id="glCanvas" width="640" height="480"></canvas>
-</body>
+<input type="range" min="0.0001" max="0.0009" step="0.0001" value="0.0001" id="slider"></body>
 <script>
+//    document.getElementById('myRange').addEventListener('change', function( event, ui ) {
+//       alert();
+//    })
+    
     var squareRotation = 0.0;
     
     function main() {
@@ -73,7 +77,8 @@
 
         // Draw the scene repeatedly
         function render(now) {
-          now *= 0.001;  // convert to seconds
+          var jander = document.getElementById('slider').value
+          now *= jander;  // convert to seconds
           const deltaTime = now - then;
           then = now;
 
