@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<script id="vertex-shader-2d" type="notjs">
+
+      //ESTO ES CODIGO C/GLSL!!!!!!!!!!
+
+      // an attribute will _____receive data from a buffer_____
+      //as you can see it is not a normal JS variable with "var" at the beginning.
+      attribute vec4 a_position;
+
+      // all shaders have a main function
+      void main() {
+
+        // gl_Position is a special variable a vertex shader
+        // is responsible for setting
+        gl_Position = a_position;
+      }
+
+    </script>
+
+<script id="fragment-shader-2d" type="notjs">
+
+     //ESTO ES CODIGO C/GLSL!!!!!!!!!!
+
+      // fragment shaders don't have a default precision so we need
+      // to pick one. mediump is a good default
+      //as you can see it is not a normal JS variable with "var" at the beginning.
+      precision mediump float;
+
+      void main() {
+        // gl_FragColor is a special variable a fragment shader
+        // is responsible for setting
+        gl_FragColor = vec4(1, 0, 0.5, 1); // return reddish-purple
+      }
+
+</script>
+
+<script>
+
+    var canvas = document.querySelector("#c");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    ////////// VARIABLE "gl"!!!!!!!!! ES EL "TOTEM"!!!! ////////////////////////////////////////
+    ////////// DICHA VARIABLE CONTIENE SIMPLEMENTE un objeto del tipo WebGLRenderingContext ////
+    /////////  https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext //////////
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    var gl = canvas.getContext("webgl");
+    if (!gl) {
+        alert("no webgl for you!");
+    }
+
+    //#1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 - #1 -
+    function createShader(gl, type, source) {
+
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+            return shader;
+        }
+
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
+
+    //#2 - #2 - #2 - #2 - #2 - #2 Creacion de los dos shaders.
+    console.log(document.querySelector("#vertex-shader-2d").text);
+    var vertexShaderSource = document.querySelector("#vertex-shader-2d").text;
+    var fragmentShaderSource = document.querySelector("#fragment-shader-2d").text;
+
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+    //#3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 - #3 -
+    function createProgram(gl, vertexShader, fragmentShader) {
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+            return program;
+        }
+
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
+
+    var program = createProgram(gl, vertexShader, fragmentShader);
+
+    // look up where the vertex data needs to go.
+    var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+
+    // 1. CREATE A BUFFER OBJECT
+    var positionBuffer = gl.createBuffer();
+
+    // 2. MAKE THE BUFFER OBJECT THE ACTIVE BUFFER
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    var positions = [
+        0, 0,
+        0, 0.5,
+        0.7, 0,
+    ];
+
+    // 3. Upload the data for this buffer object to the GPU.
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+
+    // NOW STARTS THE RENDERIZATION - NOW STARTS THE RENDERIZATION - NOW STARTS THE RENDERIZATION
+    // NOW STARTS THE RENDERIZATION - NOW STARTS THE RENDERIZATION - NOW STARTS THE RENDERIZATION
+
+    resizeCanvasToDisplaySize(gl.canvas)
+
+    // Tell WebGL how to convert from clip space to pixels
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // Clear the canvas
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    //Simplemente, establecemos cual es el "program" que se tiene que usar para el renderizado
+    gl.useProgram(program);
+
+    // Turn on the attribute
+    gl.enableVertexAttribArray(positionAttributeLocation);
+
+    // Bind the position buffer.
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+    var size = 2;          // 2 components per iteration
+    var type = gl.FLOAT;   // the data is 32bit floats
+    var normalize = false; // don't normalize the data
+    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0;        // start at the beginning of the buffer
+    gl.vertexAttribPointer(
+        positionAttributeLocation, size, type, normalize, stride, offset);
+
+    // DRAW THE SHAPE
+    var primitiveType = gl.TRIANGLES;
+    var offset = 0;
+    var count = 3;
+    gl.drawArrays(primitiveType, offset, count);
+
+    ////////////////////////////////////////////////////////////////////
+    //////// resizeCanvasToDisplaySize() ///////////////////////////////
+    //////// argumentos: el canvas que queremos redimensionar :) ///////
+    ////////////////////////////////////////////////////////////////////
+    function resizeCanvasToDisplaySize(canvas) {
+        // Lookup the size the browser is displaying the canvas in CSS pixels.
+        const displayWidth  = canvas.clientWidth;
+        const displayHeight = canvas.clientHeight;
+
+        // Check if the canvas is not the same size.
+        const needResize = canvas.width  !== displayWidth ||
+            canvas.height !== displayHeight;
+
+        if (needResize) {
+            // Make the canvas the same size
+            canvas.width  = displayWidth;
+            canvas.height = displayHeight;
+        }
+
+        return needResize;
+    }
+
+
+</script>
+
+</body>
+</html>
